@@ -1,5 +1,6 @@
 const Hoek = require('hoek');
 const ThemeConfig = require('../../../lib/theme-config');
+const Path = require('path');
 const internals = {
     options: {
             storeUrl: '',
@@ -38,6 +39,20 @@ module.exports.register = function(server, options, next) {
 
 internals.registerRoutes = function(server, next) {
     server.route([
+        {
+            method: 'GET',
+            path: '/stencil/debug-bar/{path*}',
+            handler: {
+                directory: {
+                    path: Path.join(__dirname, '../../../debug-bar/dist'),
+                },
+            },
+            config: {
+                state: {
+                    failAction: 'log',
+                },
+            },
+        },
         {
             method: 'GET',
             path: internals.paths.renderer,

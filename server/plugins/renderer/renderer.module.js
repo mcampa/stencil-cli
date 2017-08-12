@@ -43,7 +43,8 @@ module.exports.register.attributes = {
 internals.implementation = function (request, reply) {
     internals.getResponse(request, function (err, response) {
         if (err) {
-            return reply(Boom.badImplementation(err));
+            return console.log(request.path, err.message.red);
+            reply(err).code(400);
         }
 
         if (response.statusCode === 401) {

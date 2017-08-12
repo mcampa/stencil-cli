@@ -1,5 +1,8 @@
 const _ = require('lodash');
 const Paper = require('@bigcommerce/stencil-paper');
+const Fs = require('fs');
+const Path = require('path');
+const Handlebars = require('handlebars');
 const internals = {};
 
 module.exports = function (data, assembler) {
@@ -16,6 +19,7 @@ module.exports = function (data, assembler) {
         data.context.in_production = false;
 
         paper.addDecorator(internals.makeDecorator(request, data.context));
+        paper.addDecorator(internals.debugBarDecorator(request, data.context));
 
         // Plugins have the opportunity to add/modify the response by using decorators
         _.each(request.app.decorators, function (decorator) {
@@ -84,16 +88,29 @@ internals.makeDecorator = function (request, context) {
             content = content.replace(regex, '');
         }
 
-        if (request.query.debug === 'bar') {
-            debugBar = '<pre style="background-color:#EEE; word-wrap:break-word;">';
-            debugBar += internals.escapeHtml(JSON.stringify(context, null, 2)) + '</pre>';
-            regex = new RegExp('</body>');
-            content = content.replace(regex, debugBar + '\n</body>');
-        }
-
         return content;
     }
 };
+
+/**
+ * Output post-processing
+ *
+ * @param request
+ * @param context
+ */
+internals.debugBarDecorator = function (request, context) {
+    return content => {
+        return content.replace(new RegExp('</body>'), `${debugBar(request, context)}\n</body>`);
+    }
+};
+
+function debugBar(request, context) {
+    const template = Fs.readFileSync(Path.join(__dirname, 'debug-bar.html'), { encoding: 'utf8' });
+
+    return Handlebars.compile(template)({
+        data: new Buffer(JSON.stringify({ context })).toString('base64'),
+    });
+}
 
 /**
  * Scape html entities
